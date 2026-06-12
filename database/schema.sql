@@ -1504,6 +1504,13 @@ alter default privileges in schema private
 alter default privileges in schema private
   revoke all on functions from authenticated;
 
+-- service_role (backend) precisa executar os helpers internos,
+-- inclusive em colunas geradas (ex.: palavra_chave_normalizada).
+grant execute on all functions in schema private to service_role;
+
+alter default privileges in schema private
+  grant execute on functions to service_role;
+
 -- ---------------------------------------------------------------------------
 -- permissões: kanban-api (service_role) acessa tabelas em public
 -- ---------------------------------------------------------------------------

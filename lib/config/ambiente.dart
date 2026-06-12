@@ -64,6 +64,38 @@ abstract final class Ambiente {
     return int.tryParse(valor ?? '') ?? 8080;
   }
 
+  /// URL base do WPPConnect Server (ex.: `http://localhost:21465`).
+  static String get wppconnectBaseUrl {
+    carregar();
+
+    final valor =
+        Platform.environment['WPPCONNECT_BASE_URL'] ?? _env['WPPCONNECT_BASE_URL'];
+    final base = (valor == null || valor.isEmpty)
+        ? 'http://localhost:21465'
+        : valor;
+
+    return base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+  }
+
+  /// Chave secreta do WPPConnect (`SECRET_KEY` do config do servidor).
+  ///
+  /// Fica **apenas** no servidor; nunca é enviada ao frontend.
+  static String get wppconnectSecretKey => _ler('WPPCONNECT_SECRET_KEY');
+
+  /// URL do webhook desta API que o WPPConnect deve chamar ao iniciar a sessão.
+  static String get whatsappWebhookUrl {
+    carregar();
+
+    final valor = Platform.environment['KANBAN_API_WEBHOOK_URL'] ??
+        _env['KANBAN_API_WEBHOOK_URL'];
+
+    if (valor == null || valor.isEmpty) {
+      return 'http://localhost:8080/webhook/whatsapp';
+    }
+
+    return valor;
+  }
+
   static SupabaseClient get supabase {
     return _supabase ??= SupabaseClient(supabaseUrl, supabaseSecretKey);
   }

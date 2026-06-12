@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
 import 'package:kanban_api/compartilhado/autorizacao_service.dart';
 import 'package:kanban_api/config/ambiente.dart';
 import 'package:kanban_api/modulos/agendamentos/agendamento_controller.dart';
@@ -19,6 +20,9 @@ import 'package:kanban_api/modulos/usuarios/usuario_controller.dart';
 import 'package:kanban_api/modulos/usuarios/usuario_service.dart';
 import 'package:kanban_api/modulos/webhook/webhook_whatsapp_controller.dart';
 import 'package:kanban_api/modulos/webhook/webhook_whatsapp_service.dart';
+import 'package:kanban_api/modulos/whatsapp/whatsapp_controller.dart';
+import 'package:kanban_api/modulos/whatsapp/whatsapp_service.dart';
+import 'package:kanban_api/modulos/whatsapp/wppconnect_cliente.dart';
 import 'package:supabase/supabase.dart';
 
 /// Service locator global da API.
@@ -102,5 +106,18 @@ void configurarInjecaoDependencia() {
     )
     ..registerLazySingleton<WebhookWhatsappController>(
       () => WebhookWhatsappController(getIt<WebhookWhatsappService>()),
+    )
+    ..registerLazySingleton<http.Client>(http.Client.new)
+    ..registerLazySingleton<WppConnectCliente>(
+      () => WppConnectCliente(getIt<http.Client>()),
+    )
+    ..registerLazySingleton<WhatsappService>(
+      () => WhatsappService(
+        getIt<AutorizacaoService>(),
+        getIt<WppConnectCliente>(),
+      ),
+    )
+    ..registerLazySingleton<WhatsappController>(
+      () => WhatsappController(getIt<WhatsappService>()),
     );
 }
