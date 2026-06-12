@@ -1,0 +1,6 @@
+# Reverse proxy com HTTPS automático (Let's Encrypt).
+# O domínio abaixo usa sslip.io: ele resolve sozinho para o IP embutido no nome.
+# Troque 13-140-174-119 pelo IP PÚBLICO real da sua VPS (use hífens no lugar dos pontos).
+13-140-174-119.sslip.io {
+	reverse_proxy kanban-api:8080
+}
