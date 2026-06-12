@@ -1,0 +1,12 @@
+{
+   
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "🌎 Back Attach",
+            "type": "dart",
+            "request": "attach",
+            "program": ".dart_frog/server.dart"
+        },
+    ]
+}
