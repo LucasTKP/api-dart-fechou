@@ -38,12 +38,24 @@ class AutorizacaoService {
       throw const ValidacaoException('Organização é obrigatória.');
     }
 
-    final organizacao = await _supabase
-        .schema('public')
-        .from('organizacoes')
-        .select('ativa')
-        .eq('id', organizacaoId)
-        .maybeSingle();
+    final resultados = await Future.wait([
+      _supabase
+          .schema('public')
+          .from('organizacoes')
+          .select('ativa')
+          .eq('id', organizacaoId)
+          .maybeSingle(),
+      _supabase
+          .schema('public')
+          .from('membros_organizacao')
+          .select('id')
+          .eq('usuario_id', usuarioId)
+          .eq('organizacao_id', organizacaoId)
+          .maybeSingle(),
+    ]);
+
+    final organizacao = resultados[0];
+    final membro = resultados[1];
 
     if (organizacao == null) {
       throw const RecursoNaoEncontradoException('Organização não encontrada.');
@@ -53,7 +65,7 @@ class AutorizacaoService {
       throw const AcessoNegadoException('Organização inativa.');
     }
 
-    if (!await ehMembro(usuarioId: usuarioId, organizacaoId: organizacaoId)) {
+    if (membro == null) {
       throw const AcessoNegadoException('Usuário não pertence à organização.');
     }
   }

@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('EventoWppconnectEntity', () {
-    test('parseia payload real com @lid e session da organização', () {
+    test('parseia payload com @lid e session da organização', () {
       final evento = EventoWppconnectEntity.fromMap({
         'event': 'onmessage',
         'session': '7eaa284f_ad2e_4f41_96fe_e3d67177cb7c',
@@ -30,10 +30,10 @@ void main() {
       expect(evento.nomeContato, 'Lucas');
       expect(evento.enviadaPorMim, isFalse);
       expect(evento.deveProcessar, isTrue);
-      expect(evento.telefone, '+55 16 99161-4062');
+      expect(evento.jidContato, '120808890482833@lid');
     });
 
-    test('usa from @c.us quando disponível', () {
+    test('extrai jid @c.us quando disponível', () {
       final evento = EventoWppconnectEntity.fromMap({
         'event': 'onmessage',
         'session': 'abc_def',
@@ -43,8 +43,29 @@ void main() {
         'fromMe': false,
       });
 
-      expect(evento.telefone, '5516999999999');
+      expect(evento.jidContato, '5516999999999@c.us');
       expect(evento.deveProcessar, isTrue);
+    });
+
+    test('contato salvo na agenda mantém jid @lid', () {
+      final evento = EventoWppconnectEntity.fromMap({
+        'event': 'onmessage',
+        'session': 'abc_def',
+        'body': 'TESTE',
+        'type': 'chat',
+        'from': '120808890482833@lid',
+        'chatId': '120808890482833@lid',
+        'fromMe': false,
+        'sender': {
+          'id': '120808890482833@lid',
+          'pushname': 'Lucas',
+          'formattedName': 'Lucas',
+          'isMyContact': true,
+        },
+      });
+
+      expect(evento.nomeContato, 'Lucas');
+      expect(evento.jidContato, '120808890482833@lid');
     });
   });
 }

@@ -332,12 +332,24 @@ class CaptacaoAutomaticaService {
     required String quadroId,
     required String colunaId,
   }) async {
-    final quadro = await _supabase
-        .schema('public')
-        .from('quadros')
-        .select('organizacao_id')
-        .eq('id', quadroId)
-        .maybeSingle();
+    final resultados = await Future.wait([
+      _supabase
+          .schema('public')
+          .from('quadros')
+          .select('organizacao_id')
+          .eq('id', quadroId)
+          .maybeSingle(),
+      _supabase
+          .schema('public')
+          .from('colunas_quadros')
+          .select('id')
+          .eq('id', colunaId)
+          .eq('quadro_id', quadroId)
+          .maybeSingle(),
+    ]);
+
+    final quadro = resultados[0];
+    final coluna = resultados[1];
 
     if (quadro == null) {
       throw const ValidacaoException('Quadro não encontrado.');
@@ -346,14 +358,6 @@ class CaptacaoAutomaticaService {
     if (quadro['organizacao_id'] != organizacaoId) {
       throw const ValidacaoException('Quadro não pertence à organização.');
     }
-
-    final coluna = await _supabase
-        .schema('public')
-        .from('colunas_quadros')
-        .select('id')
-        .eq('id', colunaId)
-        .eq('quadro_id', quadroId)
-        .maybeSingle();
 
     if (coluna == null) {
       throw const ValidacaoException('Coluna não encontrada neste quadro.');

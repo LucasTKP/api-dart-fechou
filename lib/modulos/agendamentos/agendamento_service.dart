@@ -240,6 +240,49 @@ class AgendamentoService {
     String? clienteId,
     String? cartaoId,
   }) async {
+    if (clienteId != null && cartaoId != null) {
+      final resultados = await Future.wait([
+        _supabase
+            .schema('public')
+            .from('clientes')
+            .select('id')
+            .eq('id', clienteId)
+            .eq('organizacao_id', organizacaoId)
+            .maybeSingle(),
+        _supabase
+            .schema('public')
+            .from('cartoes')
+            .select('cliente_id, quadros!inner(organizacao_id)')
+            .eq('id', cartaoId)
+            .maybeSingle(),
+      ]);
+
+      final cliente = resultados[0];
+      final cartao = resultados[1];
+
+      if (cliente == null) {
+        throw const ValidacaoException('Cliente não encontrado.');
+      }
+
+      if (cartao == null) {
+        throw const ValidacaoException('Cartão não encontrado.');
+      }
+
+      final quadros = cartao['quadros'];
+      if (quadros is! Map || quadros['organizacao_id'] != organizacaoId) {
+        throw const ValidacaoException('Cartão não encontrado.');
+      }
+
+      final clienteCartao = cartao['cliente_id'] as String?;
+      if (clienteCartao != null && clienteCartao != clienteId) {
+        throw const ValidacaoException(
+          'Cliente informado não corresponde ao cartão.',
+        );
+      }
+
+      return;
+    }
+
     if (clienteId != null) {
       final cliente = await _supabase
           .schema('public')
@@ -269,15 +312,6 @@ class AgendamentoService {
       final quadros = cartao['quadros'];
       if (quadros is! Map || quadros['organizacao_id'] != organizacaoId) {
         throw const ValidacaoException('Cartão não encontrado.');
-      }
-
-      if (clienteId != null) {
-        final clienteCartao = cartao['cliente_id'] as String?;
-        if (clienteCartao != null && clienteCartao != clienteId) {
-          throw const ValidacaoException(
-            'Cliente informado não corresponde ao cartão.',
-          );
-        }
       }
     }
   }

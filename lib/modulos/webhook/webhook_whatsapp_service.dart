@@ -1,12 +1,14 @@
 import 'package:kanban_api/core/entidades/evento_wppconnect_entity.dart';
 import 'package:kanban_api/core/entidades/resultado_webhook_whatsapp_entity.dart';
 import 'package:kanban_api/modulos/captacao_automatica/captacao_automatica_service.dart';
+import 'package:kanban_api/modulos/whatsapp/contato_whatsapp_resolver.dart';
 import 'package:kanban_api/utils/sessao_whatsapp_util.dart';
 
 class WebhookWhatsappService {
-  WebhookWhatsappService(this._captacaoAutomatica);
+  WebhookWhatsappService(this._captacaoAutomatica, this._contatoResolver);
 
   final CaptacaoAutomaticaService _captacaoAutomatica;
+  final ContatoWhatsappResolver _contatoResolver;
 
   Future<ResultadoWebhookWhatsappEntity> processar(
     Map<String, dynamic> payload,
@@ -43,10 +45,15 @@ class WebhookWhatsappService {
       );
     }
 
+    final telefone = await _contatoResolver.resolverTelefone(
+      sessao: evento.sessao,
+      payload: payload,
+    );
+
     final captacao = await _captacaoAutomatica.executar(
       regraId: regra.id,
       nomeContato: evento.nomeContato,
-      telefone: evento.telefone,
+      telefone: telefone,
     );
 
     return ResultadoWebhookWhatsappEntity(

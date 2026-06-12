@@ -13,7 +13,7 @@ class EventoWppconnectEntity extends Equatable {
     required this.corpo,
     required this.nomeContato,
     required this.enviadaPorMim,
-    required this.telefone,
+    required this.jidContato,
   });
 
   final EventoWppconnect evento;
@@ -23,7 +23,7 @@ class EventoWppconnectEntity extends Equatable {
   final String corpo;
   final String nomeContato;
   final bool enviadaPorMim;
-  final String telefone;
+  final String jidContato;
 
   bool get deveProcessar =>
       evento.deveProcessarCaptacao &&
@@ -42,7 +42,7 @@ class EventoWppconnectEntity extends Equatable {
       corpo: corpo,
       nomeContato: _extrairNomeContato(map),
       enviadaPorMim: map['fromMe'] == true,
-      telefone: TelefoneWhatsappUtil.extrair(map),
+      jidContato: TelefoneWhatsappUtil.extrairJidContato(map),
     );
   }
 
@@ -68,6 +68,6 @@ class EventoWppconnectEntity extends Equatable {
     corpo,
     nomeContato,
     enviadaPorMim,
-    telefone,
+    jidContato,
   ];
 }

@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:kanban_api/compartilhado/contexto_usuario.dart';
-import 'package:kanban_api/config/ambiente.dart';
+import 'package:kanban_api/compartilhado/validador_jwt_supabase.dart';
+import 'package:kanban_api/config/injecao_dependencia.dart';
+import 'package:kanban_api/utils/log_api_util.dart';
 import 'package:kanban_api/utils/resposta_json_util.dart';
 
-/// Valida o JWT do Supabase Auth e injeta [ContextoUsuario].
+/// Valida o JWT do Supabase Auth localmente e injeta [ContextoUsuario].
 ///
 /// Rotas públicas (`/` e `/webhook/*`) não exigem autenticação.
 Middleware authMiddleware() {
@@ -38,10 +40,10 @@ Middleware authMiddleware() {
       }
 
       try {
-        final resposta = await Ambiente.supabase.auth.getUser(jwt);
-        final usuario = resposta.user;
+        final usuarioId =
+            getIt<ValidadorJwtSupabase>().extrairUsuarioId(jwt);
 
-        if (usuario == null) {
+        if (usuarioId == null) {
           return RespostaJsonUtil.erro(
             mensagem: 'Token de autenticação inválido.',
             statusCode: HttpStatus.unauthorized,
@@ -50,10 +52,16 @@ Middleware authMiddleware() {
 
         return handler(
           context.provide<ContextoUsuario>(
-            () => ContextoUsuario(id: usuario.id),
+            () => ContextoUsuario(id: usuarioId),
           ),
         );
-      } catch (_) {
+      } catch (erro, stackTrace) {
+        LogApiUtil.erro(
+          tipo: 'Autenticação',
+          erro: erro,
+          stackTrace: stackTrace,
+          statusCode: HttpStatus.unauthorized,
+        );
         return RespostaJsonUtil.erro(
           mensagem: 'Token de autenticação inválido.',
           statusCode: HttpStatus.unauthorized,

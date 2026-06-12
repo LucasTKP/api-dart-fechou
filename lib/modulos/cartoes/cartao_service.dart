@@ -230,25 +230,29 @@ class CartaoService {
     required String organizacaoId,
     String? responsavelId,
   }) async {
-    final coluna = await _supabase
-        .schema('public')
-        .from('colunas_quadros')
-        .select('id')
-        .eq('id', colunaId)
-        .eq('quadro_id', quadroId)
-        .maybeSingle();
+    final resultados = await Future.wait([
+      _supabase
+          .schema('public')
+          .from('colunas_quadros')
+          .select('id')
+          .eq('id', colunaId)
+          .eq('quadro_id', quadroId)
+          .maybeSingle(),
+      _supabase
+          .schema('public')
+          .from('clientes')
+          .select('id')
+          .eq('id', clienteId)
+          .eq('organizacao_id', organizacaoId)
+          .maybeSingle(),
+    ]);
+
+    final coluna = resultados[0];
+    final cliente = resultados[1];
 
     if (coluna == null) {
       throw const ValidacaoException('Coluna não encontrada neste quadro.');
     }
-
-    final cliente = await _supabase
-        .schema('public')
-        .from('clientes')
-        .select('id')
-        .eq('id', clienteId)
-        .eq('organizacao_id', organizacaoId)
-        .maybeSingle();
 
     if (cliente == null) {
       throw const ValidacaoException('Cliente não encontrado.');

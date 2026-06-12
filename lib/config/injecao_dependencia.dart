@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:kanban_api/compartilhado/autorizacao_service.dart';
+import 'package:kanban_api/compartilhado/validador_jwt_supabase.dart';
 import 'package:kanban_api/config/ambiente.dart';
 import 'package:kanban_api/modulos/agendamentos/agendamento_controller.dart';
 import 'package:kanban_api/modulos/agendamentos/agendamento_service.dart';
@@ -20,6 +21,7 @@ import 'package:kanban_api/modulos/usuarios/usuario_controller.dart';
 import 'package:kanban_api/modulos/usuarios/usuario_service.dart';
 import 'package:kanban_api/modulos/webhook/webhook_whatsapp_controller.dart';
 import 'package:kanban_api/modulos/webhook/webhook_whatsapp_service.dart';
+import 'package:kanban_api/modulos/whatsapp/contato_whatsapp_resolver.dart';
 import 'package:kanban_api/modulos/whatsapp/whatsapp_controller.dart';
 import 'package:kanban_api/modulos/whatsapp/whatsapp_service.dart';
 import 'package:kanban_api/modulos/whatsapp/wppconnect_cliente.dart';
@@ -38,6 +40,12 @@ void configurarInjecaoDependencia() {
 
   getIt
     ..registerLazySingleton<SupabaseClient>(() => Ambiente.supabase)
+    ..registerLazySingleton<ValidadorJwtSupabase>(
+      () => ValidadorJwtSupabase(
+        jwtSecret: Ambiente.supabaseJwtSecret,
+        supabaseUrl: Ambiente.supabaseUrl,
+      ),
+    )
     ..registerLazySingleton<AutorizacaoService>(
       () => AutorizacaoService(getIt<SupabaseClient>()),
     )
@@ -101,8 +109,14 @@ void configurarInjecaoDependencia() {
     ..registerLazySingleton<CaptacaoAutomaticaController>(
       () => CaptacaoAutomaticaController(getIt<CaptacaoAutomaticaService>()),
     )
+    ..registerLazySingleton<ContatoWhatsappResolver>(
+      () => ContatoWhatsappResolver(getIt<WppConnectCliente>()),
+    )
     ..registerLazySingleton<WebhookWhatsappService>(
-      () => WebhookWhatsappService(getIt<CaptacaoAutomaticaService>()),
+      () => WebhookWhatsappService(
+        getIt<CaptacaoAutomaticaService>(),
+        getIt<ContatoWhatsappResolver>(),
+      ),
     )
     ..registerLazySingleton<WebhookWhatsappController>(
       () => WebhookWhatsappController(getIt<WebhookWhatsappService>()),

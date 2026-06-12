@@ -162,6 +162,35 @@ class WppConnectCliente {
     }
   }
 
+  /// Resolve telefone via rota `contact/pn-lid` (`@lid` ou `@c.us`).
+  Future<String?> resolverTelefonePorJid(String sessao, String jidContato) async {
+    final jidCodificado = Uri.encodeComponent(jidContato);
+    final resposta = await _comToken(
+      sessao,
+      (token) => _http.get(
+        _uri('/api/$sessao/contact/pn-lid/$jidCodificado'),
+        headers: _headersAuth(token),
+      ),
+    );
+
+    if (resposta.statusCode >= 400) {
+      return null;
+    }
+
+    final corpo = _decodificarMapa(resposta.body);
+    final phoneNumber = corpo['phoneNumber'];
+    if (phoneNumber is! Map) return null;
+
+    final phoneMap = Map<String, dynamic>.from(phoneNumber);
+    final serializado = phoneMap['_serialized']?.toString() ?? '';
+    if (serializado.endsWith('@c.us')) {
+      return serializado.split('@').first;
+    }
+
+    final id = phoneMap['id']?.toString() ?? '';
+    return id.isNotEmpty ? id : null;
+  }
+
   Future<void> limparDadosSessao(String sessao) async {
     final resposta = await _http.post(
       _uri('/api/$sessao/$_secretKey/clear-session-data'),

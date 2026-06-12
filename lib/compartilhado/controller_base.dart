@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:kanban_api/compartilhado/excecoes_api.dart';
+import 'package:kanban_api/utils/log_api_util.dart';
 import 'package:kanban_api/utils/resposta_json_util.dart';
 import 'package:zard/zard.dart';
 
@@ -23,38 +24,56 @@ abstract class ControllerBase {
   Future<Response> executar(Future<Response> Function() acao) async {
     try {
       return await acao();
-    } on NaoAutenticadoException catch (erro) {
-      return RespostaJsonUtil.erro(
-        mensagem: erro.mensagem,
-        statusCode: HttpStatus.unauthorized,
+    } on ExcecaoApi catch (erro) {
+      return _respostaExcecaoApi(erro);
+    } on FormatException catch (erro) {
+      LogApiUtil.erro(
+        tipo: 'Requisição inválida',
+        erro: erro,
+        statusCode: HttpStatus.badRequest,
       );
-    } on AcessoNegadoException catch (erro) {
-      return RespostaJsonUtil.erro(
-        mensagem: erro.mensagem,
-        statusCode: HttpStatus.forbidden,
-      );
-    } on RecursoNaoEncontradoException catch (erro) {
-      return RespostaJsonUtil.erro(
-        mensagem: erro.mensagem,
-        statusCode: HttpStatus.notFound,
-      );
-    } on ValidacaoException catch (erro) {
-      return RespostaJsonUtil.erro(mensagem: erro.mensagem);
-    } on NaoImplementadoException catch (erro) {
-      return RespostaJsonUtil.erro(
-        mensagem: erro.mensagem,
-        statusCode: HttpStatus.notImplemented,
-      );
-    } on FormatException {
       return RespostaJsonUtil.erro(mensagem: 'Corpo da requisição inválido.');
     } catch (erro, stackTrace) {
-      stderr
-        ..writeln('[ERRO INTERNO] $erro')
-        ..writeln(stackTrace);
+      LogApiUtil.erro(
+        tipo: 'Erro interno',
+        erro: erro,
+        stackTrace: stackTrace,
+        statusCode: HttpStatus.internalServerError,
+      );
       return RespostaJsonUtil.erro(
         mensagem: 'Erro interno: $erro',
         statusCode: HttpStatus.internalServerError,
       );
     }
+  }
+
+  Response _respostaExcecaoApi(ExcecaoApi erro) {
+    final (tipo, statusCode) = switch (erro) {
+      NaoAutenticadoException() => (
+          'Não autenticado',
+          HttpStatus.unauthorized,
+        ),
+      AcessoNegadoException() => ('Acesso negado', HttpStatus.forbidden),
+      RecursoNaoEncontradoException() => (
+          'Recurso não encontrado',
+          HttpStatus.notFound,
+        ),
+      ValidacaoException() => ('Validação', HttpStatus.badRequest),
+      NaoImplementadoException() => (
+          'Não implementado',
+          HttpStatus.notImplemented,
+        ),
+    };
+
+    LogApiUtil.erro(
+      tipo: tipo,
+      erro: erro,
+      statusCode: statusCode,
+    );
+
+    return RespostaJsonUtil.erro(
+      mensagem: erro.mensagem,
+      statusCode: statusCode,
+    );
   }
 }
