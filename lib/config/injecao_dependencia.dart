@@ -1,7 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:kanban_api/compartilhado/autorizacao_service.dart';
-import 'package:kanban_api/compartilhado/validador_jwt_supabase.dart';
 import 'package:kanban_api/config/ambiente.dart';
 import 'package:kanban_api/modulos/agendamentos/agendamento_controller.dart';
 import 'package:kanban_api/modulos/agendamentos/agendamento_service.dart';
@@ -39,13 +38,8 @@ void configurarInjecaoDependencia() {
   if (getIt.isRegistered<SupabaseClient>()) return;
 
   getIt
+    ..registerLazySingleton<http.Client>(http.Client.new)
     ..registerLazySingleton<SupabaseClient>(() => Ambiente.supabase)
-    ..registerLazySingleton<ValidadorJwtSupabase>(
-      () => ValidadorJwtSupabase(
-        jwtSecret: Ambiente.supabaseJwtSecret,
-        supabaseUrl: Ambiente.supabaseUrl,
-      ),
-    )
     ..registerLazySingleton<AutorizacaoService>(
       () => AutorizacaoService(getIt<SupabaseClient>()),
     )
@@ -121,7 +115,6 @@ void configurarInjecaoDependencia() {
     ..registerLazySingleton<WebhookWhatsappController>(
       () => WebhookWhatsappController(getIt<WebhookWhatsappService>()),
     )
-    ..registerLazySingleton<http.Client>(http.Client.new)
     ..registerLazySingleton<WppConnectCliente>(
       () => WppConnectCliente(getIt<http.Client>()),
     )

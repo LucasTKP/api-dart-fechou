@@ -2,14 +2,17 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:kanban_api/compartilhado/contexto_usuario.dart';
-import 'package:kanban_api/compartilhado/validador_jwt_supabase.dart';
 import 'package:kanban_api/config/injecao_dependencia.dart';
 import 'package:kanban_api/utils/log_api_util.dart';
 import 'package:kanban_api/utils/resposta_json_util.dart';
+import 'package:supabase/supabase.dart' show SupabaseClient;
 
-/// Valida o JWT do Supabase Auth localmente e injeta [ContextoUsuario].
-///
-/// Rotas públicas (`/` e `/webhook/*`) não exigem autenticação.
+const _cabecalhosCors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+};
+
 Middleware authMiddleware() {
   return (handler) {
     return (context) async {
@@ -28,6 +31,7 @@ Middleware authMiddleware() {
         return RespostaJsonUtil.erro(
           mensagem: 'Token de autenticação ausente.',
           statusCode: HttpStatus.unauthorized,
+          headers: _cabecalhosCors,
         );
       }
 
@@ -36,17 +40,19 @@ Middleware authMiddleware() {
         return RespostaJsonUtil.erro(
           mensagem: 'Token de autenticação inválido.',
           statusCode: HttpStatus.unauthorized,
+          headers: _cabecalhosCors,
         );
       }
 
       try {
-        final usuarioId =
-            getIt<ValidadorJwtSupabase>().extrairUsuarioId(jwt);
+        final resposta = await getIt<SupabaseClient>().auth.getUser(jwt);
+        final usuarioId = resposta.user?.id;
 
-        if (usuarioId == null) {
+        if (usuarioId == null || usuarioId.isEmpty) {
           return RespostaJsonUtil.erro(
             mensagem: 'Token de autenticação inválido.',
             statusCode: HttpStatus.unauthorized,
+            headers: _cabecalhosCors,
           );
         }
 
@@ -65,6 +71,7 @@ Middleware authMiddleware() {
         return RespostaJsonUtil.erro(
           mensagem: 'Token de autenticação inválido.',
           statusCode: HttpStatus.unauthorized,
+          headers: _cabecalhosCors,
         );
       }
     };

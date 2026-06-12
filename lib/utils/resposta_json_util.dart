@@ -1,6 +1,5 @@
 import 'package:dart_frog/dart_frog.dart';
 
-/// Helpers para respostas HTTP padronizadas.
 abstract final class RespostaJsonUtil {
   static Response sucesso({
     required Map<String, dynamic> dados,
@@ -25,9 +24,11 @@ abstract final class RespostaJsonUtil {
   static Response erro({
     required String mensagem,
     int statusCode = 400,
+    Map<String, String> headers = const {},  // ← adicionado
   }) {
     return Response.json(
       statusCode: statusCode,
+      headers: headers,                       // ← adicionado
       body: {'sucesso': false, 'erro': mensagem},
     );
   }

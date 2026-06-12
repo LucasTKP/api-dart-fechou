@@ -57,10 +57,6 @@ abstract final class Ambiente {
     alternativas: ['SUPABASE_SERVICE_ROLE_KEY'],
   );
 
-  /// Segredo usado pelo Supabase Auth para assinar JWTs (HS256).
-  /// Dashboard: Project Settings > API > JWT Secret.
-  static String get supabaseJwtSecret => _ler('SUPABASE_JWT_SECRET');
-
   static int get porta {
     carregar();
 
