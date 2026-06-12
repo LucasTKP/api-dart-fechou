@@ -1,0 +1,12 @@
+.git
+.gitignore
+.dart_tool/
+.dart_frog/
+build/
+coverage/
+test/
+.vscode/
+.DS_Store
+.env
+.env.example
+README.md
